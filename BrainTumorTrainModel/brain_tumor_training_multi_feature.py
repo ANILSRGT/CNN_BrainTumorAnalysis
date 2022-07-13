@@ -20,9 +20,9 @@ def train_run():
 
     hidden_activation = "relu"
     output_activation = "sigmoid"
-    img_size = 64
-    batch_size = 128
-    epochs = 256
+    img_size = 64  # 64
+    batch_size = 128  # 128
+    epochs = 256  # 256
     num_classes = 2
     color_mode = 'grayscale'  # One of "grayscale", "rgb", "rgba". The desired image format.
     if color_mode == 'grayscale':
@@ -56,11 +56,11 @@ def train_run():
             "ASM", "Homogeneity", "Dissimilarity", "Correlation", "Coarseness"]
     df_num = pd.read_csv("brain_tumor.csv", usecols=cols)
 
-    # Min Max Normalization
+    # Feature değerlerini Min Max Normalization ile 0 ile 1 arası değerlere çevir
     df_num_norm = (df_num - df_num.min()) / (df_num.max() - df_num.min())
     print(df_num_norm.head())
 
-    # MEAN - STD - ENERGY değer dağılımları
+    # MEAN - STD - ENERGY featurelarının değer dağılımlarını göster
     plt.figure(figsize=(10, 7))
     sns.kdeplot(df_num_norm["Mean"], label="Mean")
     sns.kdeplot(df_num_norm["Standard Deviation"], label="Standard Deviation")
@@ -77,7 +77,7 @@ def train_run():
     x_num_valid, x_num_test, y_num_valid, y_num_test = train_test_split(x_num_rem, y_num_rem, test_size=0.5,
                                                                         shuffle=False)
 
-    # Load Images
+    # Görüntü verilerini veri setinden çekme
     train_image = []
     for i in tqdm(range(df.shape[0])):
         img = image.load_img(dataset_dir + df['Image'][i] + '.jpg',
@@ -117,7 +117,7 @@ def train_run():
     valid_gen = other_datagen.flow(x_img_valid, y_img_valid, batch_size=batch_size, shuffle=False)
 
     ###
-    # Show Samples
+    # Görüntü verilerinden birkaç örnek
     ###
     def plot_img_sample(img_x, img_y, classes):
         col = 4
@@ -138,18 +138,18 @@ def train_run():
     # Create Models
     ##
     def create_numerical_model(dim):
-        # define our MLP network
+        # Multi layer perceptron
         num_model = Sequential()
         num_model.add(Dense(8, input_dim=dim, activation=hidden_activation))
         num_model.add(Dense(4, activation=hidden_activation))
-        # return our model
+
         return num_model
 
     def create_image_model(width, height, depth, filters=(16, 32, 64)):
         img_input_shape = (height, width, depth)
         # Input Layer
         inputs = Input(shape=img_input_shape)
-        # loop over the number of filters
+
         x_img = 0
         for (index, f) in enumerate(filters):
             # if this is the first CONV layer then set the input
@@ -179,7 +179,7 @@ def train_run():
     mlp = create_numerical_model(x_num_train.shape[1])
     cnn = create_image_model(input_shape[0], input_shape[1], input_shape[2], filters=(32, 64))
 
-    # Concatenate of numerical and image model
+    # Numerical model ile görüntü modelinin birleştirilmesi
     combined_input = concatenate([mlp.output, cnn.output])
 
     # Fully Connected Layer
@@ -210,7 +210,7 @@ def train_run():
     ##
     # Save Model
     ##
-    saved_model_dir = 'models/brain_tumor_model/'
+    saved_model_dir = 'models/brain_tumor_model/MultiFeature/hyperparameter_experiments'
     tf.saved_model.save(model, saved_model_dir)
 
     converter = tf.lite.TFLiteConverter.from_saved_model(saved_model_dir)
